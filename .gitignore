@@ -22,3 +22,7 @@ error_log
 
 # PHP dependencies
 /vendor/
+
+# Docusaurus docs live in a sibling repository (symlinked here)
+/docs
+/docs/

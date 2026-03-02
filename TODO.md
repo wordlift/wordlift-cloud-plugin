@@ -19,6 +19,8 @@
 - [x] Add a `Settings` action link on the Plugins screen and use generic telemetry wording in wp-admin settings copy.
 - [x] Fix Classic Editor Entity Types metabox rendering and tab switching (`All` / `Most Used` / `A-Z`) while preserving multi-select behavior.
 - [x] Expand PHPUnit source coverage scope to all `includes/` files and raise line coverage above 90%.
+- [x] Add Docusaurus documentation for the WordLift Cloud Plugin in the Apps, Tools & Plugins section, including step-by-step Entity Types selection guides with screenshots.
+- [x] Bump plugin minor version to `1.2.0` and prepare release tag.
 
 ## Next
 

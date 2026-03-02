@@ -3,7 +3,7 @@
  * Plugin Name: WordLift Cloud
  * Plugin URI: https://wordlift.io
  * Description: Adds WordLift Cloud integration, manages Entity Types taxonomy, and supports optional admin-only telemetry.
- * Version: 1.1.1
+ * Version: 1.2.0
  * Author: WordLift
  * Author URI: https://wordlift.io
  * License: GPL2
