@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT_DIR"
+
+WORDPRESS_PORT="${WORDPRESS_PORT:-8090}"
+SITE_URL="${SITE_URL:-http://localhost:${WORDPRESS_PORT}}"
+SITE_TITLE="${SITE_TITLE:-WordLift Cloud Local}"
+ADMIN_USER="${ADMIN_USER:-admin}"
+ADMIN_PASSWORD="${ADMIN_PASSWORD:-admin}"
+ADMIN_EMAIL="${ADMIN_EMAIL:-admin@example.com}"
+PLUGIN_SLUG="wordlift-cloud-plugin"
+
+compose() {
+  docker compose "$@"
+}
+
+wpcli() {
+  compose run --rm --user root wpcli "$1"
+}
+
+wait_for_wordpress() {
+  echo "Waiting for WordPress container..."
+  for i in $(seq 1 60); do
+    if compose exec -T wordpress sh -lc "test -f /var/www/html/wp-config.php || test -f /var/www/html/index.php"; then
+      return 0
+    fi
+    sleep 2
+  done
+  echo "WordPress did not become ready in time."
+  return 1
+}
+
+bootstrap_wordpress() {
+  wait_for_wordpress
+  compose exec -u root -T wordpress sh -lc "mkdir -p /var/www/html/wp-content/uploads /var/www/html/wp-content/upgrade /var/www/html/wp-content/plugins && chown www-data:www-data /var/www/html/wp-content /var/www/html/wp-content/uploads /var/www/html/wp-content/upgrade /var/www/html/wp-content/plugins && chmod 775 /var/www/html/wp-content /var/www/html/wp-content/uploads /var/www/html/wp-content/upgrade /var/www/html/wp-content/plugins"
+
+  echo "Installing WordPress (if needed)..."
+  if ! wpcli "wp core is-installed --allow-root" >/dev/null 2>&1; then
+    wpcli "wp core install --url='$SITE_URL' --title='$SITE_TITLE' --admin_user='$ADMIN_USER' --admin_password='$ADMIN_PASSWORD' --admin_email='$ADMIN_EMAIL' --skip-email --allow-root"
+  fi
+
+  echo "Activating plugin..."
+  wpcli "wp plugin activate '$PLUGIN_SLUG' --allow-root"
+
+  echo "Configuring Classic Editor..."
+  if ! wpcli "wp plugin is-installed classic-editor --allow-root" >/dev/null 2>&1; then
+    wpcli "wp plugin install classic-editor --allow-root"
+  fi
+  wpcli "wp plugin activate classic-editor --allow-root"
+  wpcli "wp option update classic-editor-replace classic --allow-root"
+  wpcli "wp option update classic-editor-allow-users 1 --allow-root"
+}
+
+cmd_up() {
+  compose up -d
+  bootstrap_wordpress
+  echo "WordPress is running at $SITE_URL"
+  echo "Admin user: $ADMIN_USER"
+  echo "Admin password: $ADMIN_PASSWORD"
+}
+
+cmd_down() {
+  compose down
+}
+
+cmd_reset() {
+  compose down -v
+  compose up -d
+  bootstrap_wordpress
+  echo "Environment reset complete: $SITE_URL"
+}
+
+cmd_logs() {
+  compose logs -f
+}
+
+cmd_wp() {
+  shift || true
+  compose run --rm --user root --entrypoint wp wpcli "$@" --allow-root
+}
+
+usage() {
+  cat <<'EOF'
+Usage: ./scripts/dev <command>
+
+Commands:
+  up      Start containers, install WordPress (if needed), activate plugin
+  down    Stop containers
+  reset   Recreate containers and volumes from scratch
+  logs    Follow container logs
+  wp ...  Run any wp-cli command (example: ./scripts/dev wp plugin list)
+EOF
+}
+
+case "${1:-}" in
+  up) cmd_up ;;
+  down) cmd_down ;;
+  reset) cmd_reset ;;
+  logs) cmd_logs ;;
+  wp) cmd_wp "$@" ;;
+  *) usage; exit 1 ;;
+esac

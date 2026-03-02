@@ -16,3 +16,9 @@ Thumbs.db
 # Logs
 debug.log
 error_log
+
+# Local agent notes
+.AGENTS.md
+
+# PHP dependencies
+/vendor/

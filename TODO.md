@@ -1,0 +1,31 @@
+# TODO
+
+## Completed
+
+- [x] Add `wl_entity_type` taxonomy registration to WordLift Cloud plugin.
+- [x] Add custom Entity Type metabox handling (All / Most Used / A-Z).
+- [x] Enforce exclusive Entity Type assignment on post save.
+- [x] Add installer/sync flow for taxonomy bootstrap and updates.
+- [x] Generate distilled Schema.org data from `schemaorg-current-https.jsonld`.
+- [x] Add automated tests for schema distillation and slug/name rewrite behavior.
+- [x] Output selected `wl_entity_type` as frontend meta tag (`wl:entity_type`) on singular pages.
+- [x] Add one-command local Docker developer environment (`./scripts/dev up`) with WP bootstrap and plugin activation.
+- [x] Exclude and remove `DataType` and all its subclasses from `wl_entity_type`.
+- [x] Render `A-Z` Entity Types as a flat alphabetical checklist in Classic Editor.
+- [x] Add `Selected` tab with live selected-term count/list to keep chosen Entity Types visible while browsing large taxonomies.
+- [x] Add optional telemetry integration (settings page + conditional admin loader + consent filter hook).
+- [x] Introduce service interfaces and a bootstrap container to centralize plugin wiring (`Hookable`, `Activatable`, `AnalyticsProvider`).
+- [x] Restrict telemetry to backend authenticated usage and add event tracking for Entity Types/admin settings interactions.
+- [x] Add a `Settings` action link on the Plugins screen and use generic telemetry wording in wp-admin settings copy.
+- [x] Fix Classic Editor Entity Types metabox rendering and tab switching (`All` / `Most Used` / `A-Z`) while preserving multi-select behavior.
+- [x] Expand PHPUnit source coverage scope to all `includes/` files and raise line coverage above 90%.
+
+## Next
+
+- [ ] Add WordPress integration tests (WP core test suite) for taxonomy registration and term sync in a real WP runtime.
+- [ ] Add WordPress integration tests (WP core test suite) for service-container bootstrapping/hooks and taxonomy registration in a real WP runtime.
+- [ ] Add admin capability fine-tuning for editing/deleting `wl_entity_type` terms if required by product policy.
+- [ ] Add explicit external service disclosure in `readme.txt` for WordPress.org compliance (service dependency, data flow, privacy policy URL, terms URL).
+- [ ] Add an explicit opt-in/consent flow before loading `https://cloud.wordlift.io/app/bootstrap.js` on the frontend.
+- [ ] Add plugin settings/admin notice documenting external requests and behavior when the remote service is unavailable.
+- [ ] Run a pre-release compliance checklist against https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/ and record results.
