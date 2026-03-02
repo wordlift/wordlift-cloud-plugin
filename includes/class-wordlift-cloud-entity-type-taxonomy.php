@@ -16,6 +16,7 @@ class Wordlift_Cloud_Entity_Type_Taxonomy implements Wordlift_Cloud_Hookable_Ser
 	 * Taxonomy slug.
 	 */
 	const TAXONOMY_NAME = 'wl_entity_type';
+	const PLUGIN_VERSION_OPTION = 'wl_cloud_plugin_version';
 
 	/**
 	 * @var Wordlift_Cloud_Entity_Type_Taxonomy_Installer
@@ -37,7 +38,7 @@ class Wordlift_Cloud_Entity_Type_Taxonomy implements Wordlift_Cloud_Hookable_Ser
 	 */
 	public function register_hooks() {
 		add_action( 'init', array( $this, 'register_taxonomy' ) );
-		add_action( 'init', array( $this, 'maybe_sync_terms' ), 20 );
+		add_action( 'admin_init', array( $this, 'maybe_sync_terms_on_plugin_update' ) );
 		add_action( 'wp_head', array( $this, 'output_frontend_entity_type_meta' ), 20 );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
 		add_action( 'save_post', array( $this, 'capture_admin_selection_updated' ), 20, 3 );
@@ -76,6 +77,7 @@ class Wordlift_Cloud_Entity_Type_Taxonomy implements Wordlift_Cloud_Hookable_Ser
 	public function activate() {
 		$this->register_taxonomy();
 		$this->installer->maybe_sync( true );
+		update_option( self::PLUGIN_VERSION_OPTION, $this->get_plugin_version(), true );
 		flush_rewrite_rules();
 	}
 
@@ -130,6 +132,38 @@ class Wordlift_Cloud_Entity_Type_Taxonomy implements Wordlift_Cloud_Hookable_Ser
 				'wl_entity_type_sync_run',
 				array(
 					'sync_status' => 'synced',
+				)
+			);
+		}
+	}
+
+	/**
+	 * Run taxonomy sync only when plugin version changed (update path).
+	 */
+	public function maybe_sync_terms_on_plugin_update() {
+		if ( ! is_admin() ) {
+			return;
+		}
+
+		$current_version = $this->get_plugin_version();
+		if ( '' === $current_version ) {
+			return;
+		}
+
+		$installed_version = (string) get_option( self::PLUGIN_VERSION_OPTION, '' );
+		if ( hash_equals( $installed_version, $current_version ) ) {
+			return;
+		}
+
+		$this->installer->maybe_sync( true );
+		update_option( self::PLUGIN_VERSION_OPTION, $current_version, true );
+
+		if ( 'synced' === $this->installer->get_last_sync_status() ) {
+			Wordlift_Cloud_Posthog_Integration::capture_server_event(
+				'wl_entity_type_sync_run',
+				array(
+					'sync_status' => 'synced',
+					'source'      => 'plugin_update',
 				)
 			);
 		}
@@ -278,6 +312,19 @@ class Wordlift_Cloud_Entity_Type_Taxonomy implements Wordlift_Cloud_Hookable_Ser
 	 */
 	private function should_enqueue_metabox_tabs_script( $hook_suffix ) {
 		return in_array( (string) $hook_suffix, array( 'post.php', 'post-new.php' ), true );
+	}
+
+	/**
+	 * Resolve current plugin version.
+	 *
+	 * @return string
+	 */
+	private function get_plugin_version() {
+		if ( defined( 'WORDLIFT_CLOUD_VERSION' ) ) {
+			return (string) constant( 'WORDLIFT_CLOUD_VERSION' );
+		}
+
+		return '';
 	}
 
 	/**

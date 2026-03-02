@@ -21,6 +21,8 @@
 - [x] Expand PHPUnit source coverage scope to all `includes/` files and raise line coverage above 90%.
 - [x] Add Docusaurus documentation for the WordLift Cloud Plugin in the Apps, Tools & Plugins section, including step-by-step Entity Types selection guides with screenshots.
 - [x] Bump plugin minor version to `1.2.0` and prepare release tag.
+- [x] Harden `wl_entity_type` against WPML translation side effects by shipping `wpml-config.xml` and pruning non-canonical translated term slugs during sync.
+- [x] Move taxonomy sync execution off global `init`; run sync only on activation and admin-side plugin version changes.
 
 ## Next
 

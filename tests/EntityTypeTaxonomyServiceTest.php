@@ -15,6 +15,7 @@ final class EntityTypeTaxonomyServiceTest extends WordPressTestCase {
 		);
 
 		self::assertContains( 'init', $hooks );
+		self::assertContains( 'admin_init', $hooks );
 		self::assertContains( 'wp_head', $hooks );
 		self::assertContains( 'admin_enqueue_scripts', $hooks );
 		self::assertContains( 'save_post', $hooks );
@@ -127,7 +128,39 @@ final class EntityTypeTaxonomyServiceTest extends WordPressTestCase {
 
 		self::assertSame( array( true ), $fake_installer->force_args );
 		self::assertCount( 1, $GLOBALS['wl_test_registered_taxonomy'] );
+		self::assertSame( 'test-version', $GLOBALS['wl_test_options'][ Wordlift_Cloud_Entity_Type_Taxonomy::PLUGIN_VERSION_OPTION ] );
 		self::assertSame( 1, $GLOBALS['wl_test_flush_rewrite_rules'] );
+	}
+
+	public function test_maybe_sync_terms_on_plugin_update_runs_only_when_version_changes_in_admin(): void {
+		$service = new Wordlift_Cloud_Entity_Type_Taxonomy();
+
+		$fake_installer = new class() {
+			/** @var array<int,bool> */
+			public $force_args = array();
+			public function maybe_sync( $force = false ) {
+				$this->force_args[] = (bool) $force;
+				return true;
+			}
+			public function get_last_sync_status() {
+				return 'synced';
+			}
+		};
+
+		$reflection = new ReflectionClass( $service );
+		$property   = $reflection->getProperty( 'installer' );
+		$property->setAccessible( true );
+		$property->setValue( $service, $fake_installer );
+
+		$GLOBALS['wl_test_is_admin'] = true;
+		$GLOBALS['wl_test_options'][ Wordlift_Cloud_Entity_Type_Taxonomy::PLUGIN_VERSION_OPTION ] = 'old-version';
+
+		$service->maybe_sync_terms_on_plugin_update();
+		self::assertSame( array( true ), $fake_installer->force_args );
+		self::assertSame( 'test-version', $GLOBALS['wl_test_options'][ Wordlift_Cloud_Entity_Type_Taxonomy::PLUGIN_VERSION_OPTION ] );
+
+		$service->maybe_sync_terms_on_plugin_update();
+		self::assertSame( array( true ), $fake_installer->force_args );
 	}
 
 	public function test_maybe_sync_terms_captures_sync_event_when_status_is_synced_in_admin(): void {

@@ -5,6 +5,10 @@ if ( ! defined( 'ABSPATH' ) ) {
 	define( 'ABSPATH', __DIR__ . '/../' );
 }
 
+if ( ! defined( 'WORDLIFT_CLOUD_VERSION' ) ) {
+	define( 'WORDLIFT_CLOUD_VERSION', 'test-version' );
+}
+
 if ( ! class_exists( 'WP_Error' ) ) {
 	class WP_Error {
 	}

@@ -64,6 +64,10 @@ Classic editor defaults configured by setup:
 - Bootstraps and updates taxonomy terms from a distilled Schema.org dataset:
   - source: `https://schema.org/version/latest/schemaorg-current-https.jsonld`
   - distilled data file: `resources/schemaorg/schema-classes.distilled.json`
+- WPML compatibility:
+  - ships `wpml-config.xml` to keep `wl_entity_type` non-translatable
+  - removes non-canonical slugs (for example language-suffixed duplicates) during sync
+  - sync runs on plugin activation and plugin update (admin path), not on every page load
 
 ## Schema Data Build
 

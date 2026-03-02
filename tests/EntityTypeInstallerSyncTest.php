@@ -125,4 +125,43 @@ final class EntityTypeInstallerSyncTest extends WordPressTestCase {
 
 		unlink( $dataset_file );
 	}
+
+	public function test_maybe_sync_removes_non_dataset_terms_even_when_hash_is_unchanged(): void {
+		$dataset_file = tempnam( sys_get_temp_dir(), 'wl-schema-' );
+		$dataset      = array(
+			'datasetVersion' => 'v1',
+			'schemaClasses'  => array(
+				array(
+					'name'        => 'Service',
+					'label'       => 'Service',
+					'slug'        => 'service',
+					'description' => 'Service type',
+					'parents'     => array(),
+					'children'    => array(),
+				),
+			),
+		);
+		file_put_contents( $dataset_file, (string) json_encode( $dataset ) );
+
+		$GLOBALS['wl_test_options'][ Wordlift_Cloud_Entity_Type_Taxonomy_Installer::DATA_HASH_OPTION ] = md5( (string) wp_json_encode( $dataset ) );
+		$GLOBALS['wl_test_terms_list'] = array(
+			(object) array(
+				'term_id' => 41,
+				'slug'    => 'service',
+			),
+			(object) array(
+				'term_id' => 42,
+				'slug'    => 'service-fr',
+			),
+		);
+
+		$installer = new Wordlift_Cloud_Entity_Type_Taxonomy_Installer( 'wl_entity_type', $dataset_file );
+
+		self::assertTrue( $installer->maybe_sync( false ) );
+		self::assertSame( 'no-change', $installer->get_last_sync_status() );
+		self::assertCount( 1, $GLOBALS['wl_test_term_deletes'] );
+		self::assertSame( 42, $GLOBALS['wl_test_term_deletes'][0]['term_id'] );
+
+		unlink( $dataset_file );
+	}
 }

@@ -3,7 +3,7 @@ Contributors: wordlift
 Tags: wordlift, cloud, seo
 Requires at least: 5.0
 Tested up to: 6.4
-Stable tag: 1.2.0
+Stable tag: 1.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -48,6 +48,11 @@ This plugin connects to external services:
 2. Activate the plugin through the 'Plugins' menu in WordPress.
 
 == Changelog ==
+
+= 1.2.1 =
+* Run `wl_entity_type` sync only on activation and admin-side plugin updates (version change), not on every request.
+* Add WPML configuration to keep `wl_entity_type` non-translatable.
+* Prune non-canonical taxonomy terms (including language-suffixed duplicates) during sync.
 
 = 1.2.0 =
 * Documentation and release maintenance update.

@@ -75,12 +75,14 @@ class Wordlift_Cloud_Entity_Type_Taxonomy_Installer {
 			return false;
 		}
 
-		$payload_hash = md5( wp_json_encode( $dataset ) );
-		$stored_hash  = (string) get_option( self::DATA_HASH_OPTION, '' );
+		$payload_hash   = md5( wp_json_encode( $dataset ) );
+		$stored_hash    = (string) get_option( self::DATA_HASH_OPTION, '' );
 		$excluded_slugs = self::get_excluded_slugs( $dataset['schemaClasses'] );
+		$allowed_slugs  = $this->get_allowed_slugs( $dataset['schemaClasses'], $excluded_slugs );
 
-		// Always enforce exclusion cleanup, even when the dataset hash did not change.
+		// Always enforce term cleanup, even when the dataset hash did not change.
 		$this->remove_excluded_terms( $excluded_slugs );
+		$this->remove_non_dataset_terms( $allowed_slugs );
 		if ( ! $force && '' !== $stored_hash && hash_equals( $stored_hash, $payload_hash ) ) {
 			$this->last_sync_status = 'no-change';
 			return true;
@@ -259,6 +261,76 @@ class Wordlift_Cloud_Entity_Type_Taxonomy_Installer {
 			}
 			wp_delete_term( (int) $term['term_id'], $this->taxonomy_name );
 		}
+	}
+
+	/**
+	 * Remove taxonomy terms not present in the canonical distilled dataset.
+	 *
+	 * @param array<int,string> $allowed_slugs Canonical slugs allowed in taxonomy.
+	 */
+	private function remove_non_dataset_terms( $allowed_slugs ) {
+		$terms = get_terms(
+			array(
+				'taxonomy'   => $this->taxonomy_name,
+				'hide_empty' => false,
+			)
+		);
+		if ( is_wp_error( $terms ) || ! is_array( $terms ) ) {
+			return;
+		}
+
+		$allowed_lookup = array_fill_keys( $allowed_slugs, true );
+		foreach ( $terms as $term ) {
+			$term_id = 0;
+			$slug    = '';
+
+			if ( is_object( $term ) ) {
+				$term_id = isset( $term->term_id ) ? (int) $term->term_id : 0;
+				$slug    = isset( $term->slug ) && is_string( $term->slug ) ? $term->slug : '';
+			}
+
+			if ( is_array( $term ) ) {
+				$term_id = isset( $term['term_id'] ) ? (int) $term['term_id'] : 0;
+				$slug    = isset( $term['slug'] ) && is_string( $term['slug'] ) ? $term['slug'] : '';
+			}
+
+			if ( $term_id < 1 || '' === $slug || isset( $allowed_lookup[ $slug ] ) ) {
+				continue;
+			}
+
+			wp_delete_term( $term_id, $this->taxonomy_name );
+		}
+	}
+
+	/**
+	 * Return canonical slugs that are allowed to remain in taxonomy.
+	 *
+	 * @param array<int,array<string,mixed>> $classes Distilled classes.
+	 * @param array<int,string>              $excluded_slugs Slugs to exclude.
+	 *
+	 * @return array<int,string>
+	 */
+	private function get_allowed_slugs( $classes, $excluded_slugs ) {
+		$allowed_slugs   = array();
+		$excluded_lookup = array_fill_keys( $excluded_slugs, true );
+
+		foreach ( $classes as $class ) {
+			if ( ! $this->is_valid_schema_class_record( $class ) ) {
+				continue;
+			}
+
+			$slug = $class['slug'];
+			if ( isset( $excluded_lookup[ $slug ] ) ) {
+				continue;
+			}
+
+			$allowed_slugs[] = $slug;
+		}
+
+		$allowed_slugs = array_values( array_unique( $allowed_slugs ) );
+		sort( $allowed_slugs );
+
+		return $allowed_slugs;
 	}
 
 	/**
