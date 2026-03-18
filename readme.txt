@@ -3,7 +3,7 @@ Contributors: wordlift
 Tags: wordlift, cloud, seo
 Requires at least: 5.0
 Tested up to: 6.9
-Stable tag: 1.2.1
+Stable tag: 1.2.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -58,7 +58,7 @@ This plugin connects to external services:
 
 == Changelog ==
 
-= Unreleased =
+= 1.2.2 =
 * Added plugin-level FAQ rendering configuration (enable toggle, target element ID, editable HTML/Mustache template).
 * Added per-post FAQ override metabox (`Inherit`, `Enable`, `Disable`) for public post types.
 * Added FAQ-aware frontend output: bootstrap FAQ attributes + in-page template script when effective FAQ rendering is enabled.
