@@ -31,3 +31,7 @@ error_log
 /dist/
 /wordlift-plugin/
 /WordLift/
+
+# Local test/artifact files
+/.phpunit.result.cache
+/entity-types-metabox-after-fix.png
