@@ -85,6 +85,10 @@ function wordlift_test_reset_wp_state() {
 	$GLOBALS['wl_test_registered_settings'] = array();
 	$GLOBALS['wl_test_settings_sections']   = array();
 	$GLOBALS['wl_test_settings_fields']     = array();
+	$GLOBALS['wl_test_privacy_policy_content'] = array();
+	$GLOBALS['wl_test_meta_boxes']          = array();
+	$GLOBALS['wl_test_post_meta']           = array();
+	$GLOBALS['wl_test_nonces']              = array();
 }
 
 wordlift_test_reset_wp_state();
@@ -92,6 +96,12 @@ wordlift_test_reset_wp_state();
 if ( ! function_exists( 'esc_attr' ) ) {
 	function esc_attr( $text ) {
 		return htmlspecialchars( (string) $text, ENT_QUOTES, 'UTF-8' );
+	}
+}
+
+if ( ! function_exists( 'esc_url' ) ) {
+	function esc_url( $url ) {
+		return (string) $url;
 	}
 }
 
@@ -212,6 +222,37 @@ if ( ! function_exists( 'add_options_page' ) ) {
 	}
 }
 
+if ( ! function_exists( 'add_meta_box' ) ) {
+	function add_meta_box( $id, $title, $callback, $screen = null, $context = 'advanced', $priority = 'default', $callback_args = null ) {
+		$GLOBALS['wl_test_meta_boxes'][] = array(
+			'id'            => (string) $id,
+			'title'         => (string) $title,
+			'callback'      => $callback,
+			'screen'        => $screen,
+			'context'       => (string) $context,
+			'priority'      => (string) $priority,
+			'callback_args' => $callback_args,
+		);
+	}
+}
+
+if ( ! function_exists( 'wp_nonce_field' ) ) {
+	function wp_nonce_field( $action = -1, $name = '_wpnonce', $referer = true, $echo = true ) {
+		$value = 'nonce-' . (string) $action;
+		$GLOBALS['wl_test_nonces'][ (string) $name ] = $value;
+		if ( $echo ) {
+			echo '<input type="hidden" name="' . esc_attr( (string) $name ) . '" value="' . esc_attr( $value ) . '" />';
+		}
+		return $value;
+	}
+}
+
+if ( ! function_exists( 'wp_verify_nonce' ) ) {
+	function wp_verify_nonce( $nonce, $action = -1 ) {
+		return ( 'nonce-' . (string) $action ) === (string) $nonce;
+	}
+}
+
 if ( ! function_exists( 'settings_fields' ) ) {
 	function settings_fields( $group ) {
 		echo '<input type="hidden" name="option_page" value="' . esc_attr( (string) $group ) . '" />';
@@ -233,6 +274,16 @@ if ( ! function_exists( 'submit_button' ) ) {
 if ( ! function_exists( 'checked' ) ) {
 	function checked( $checked, $current = true, $echo = true ) {
 		$output = ( $checked == $current ) ? 'checked="checked"' : '';
+		if ( $echo ) {
+			echo $output;
+		}
+		return $output;
+	}
+}
+
+if ( ! function_exists( 'selected' ) ) {
+	function selected( $selected, $current = true, $echo = true ) {
+		$output = ( $selected == $current ) ? 'selected="selected"' : '';
 		if ( $echo ) {
 			echo $output;
 		}
@@ -268,6 +319,46 @@ if ( ! function_exists( 'update_option' ) ) {
 	}
 }
 
+if ( ! function_exists( 'get_post_meta' ) ) {
+	function get_post_meta( $post_id, $key = '', $single = false ) {
+		$post_id = (int) $post_id;
+		$key     = (string) $key;
+		if ( ! isset( $GLOBALS['wl_test_post_meta'][ $post_id ] ) || ! array_key_exists( $key, $GLOBALS['wl_test_post_meta'][ $post_id ] ) ) {
+			return $single ? '' : array();
+		}
+
+		$value = $GLOBALS['wl_test_post_meta'][ $post_id ][ $key ];
+		if ( $single ) {
+			return $value;
+		}
+
+		return array( $value );
+	}
+}
+
+if ( ! function_exists( 'update_post_meta' ) ) {
+	function update_post_meta( $post_id, $meta_key, $meta_value, $prev_value = '' ) {
+		$post_id = (int) $post_id;
+		if ( ! isset( $GLOBALS['wl_test_post_meta'][ $post_id ] ) ) {
+			$GLOBALS['wl_test_post_meta'][ $post_id ] = array();
+		}
+		$GLOBALS['wl_test_post_meta'][ $post_id ][ (string) $meta_key ] = $meta_value;
+		return true;
+	}
+}
+
+if ( ! function_exists( 'delete_post_meta' ) ) {
+	function delete_post_meta( $post_id, $meta_key, $meta_value = '' ) {
+		$post_id = (int) $post_id;
+		$key     = (string) $meta_key;
+		if ( isset( $GLOBALS['wl_test_post_meta'][ $post_id ][ $key ] ) ) {
+			unset( $GLOBALS['wl_test_post_meta'][ $post_id ][ $key ] );
+			return true;
+		}
+		return false;
+	}
+}
+
 if ( ! function_exists( 'wp_add_inline_script' ) ) {
 	function wp_add_inline_script( $handle, $data, $position = 'after' ) {
 		$GLOBALS['wl_test_inline_scripts'][] = array(
@@ -275,6 +366,30 @@ if ( ! function_exists( 'wp_add_inline_script' ) ) {
 			'data'     => (string) $data,
 			'position' => (string) $position,
 		);
+		return true;
+	}
+}
+
+if ( ! function_exists( 'wp_enqueue_code_editor' ) ) {
+	function wp_enqueue_code_editor( $settings ) {
+		return (array) $settings;
+	}
+}
+
+if ( ! function_exists( 'wp_localize_script' ) ) {
+	function wp_localize_script( $handle, $object_name, $l10n ) {
+		return true;
+	}
+}
+
+if ( ! function_exists( 'wp_enqueue_script' ) ) {
+	function wp_enqueue_script( $handle, $src = '', $deps = array(), $ver = false, $in_footer = false ) {
+		return true;
+	}
+}
+
+if ( ! function_exists( 'wp_enqueue_style' ) ) {
+	function wp_enqueue_style( $handle, $src = '', $deps = array(), $ver = false, $media = 'all' ) {
 		return true;
 	}
 }
@@ -304,6 +419,12 @@ if ( ! function_exists( 'wp_style_is' ) ) {
 if ( ! function_exists( 'sanitize_key' ) ) {
 	function sanitize_key( $key ) {
 		return preg_replace( '/[^a-z0-9_\-]/', '', strtolower( (string) $key ) );
+	}
+}
+
+if ( ! function_exists( 'wp_unslash' ) ) {
+	function wp_unslash( $value ) {
+		return $value;
 	}
 }
 
@@ -338,6 +459,12 @@ if ( ! function_exists( 'is_wp_error' ) ) {
 if ( ! function_exists( 'current_user_can' ) ) {
 	function current_user_can( $capability, ...$args ) {
 		return (bool) $GLOBALS['wl_test_current_user_can'];
+	}
+}
+
+if ( ! function_exists( 'wp_die' ) ) {
+	function wp_die( $message = '' ) {
+		throw new RuntimeException( (string) $message );
 	}
 }
 
@@ -498,6 +625,24 @@ if ( ! function_exists( 'wp_terms_checklist' ) ) {
 if ( ! function_exists( 'get_terms' ) ) {
 	function get_terms( $args = array() ) {
 		return $GLOBALS['wl_test_terms_list'];
+	}
+}
+
+if ( ! function_exists( 'wp_kses_post' ) ) {
+	function wp_kses_post( $content ) {
+		return (string) $content;
+	}
+}
+
+if ( ! function_exists( 'wp_add_privacy_policy_content' ) ) {
+	function wp_add_privacy_policy_content( $plugin_name, $policy_text ) {
+		if ( ! isset( $GLOBALS['wl_test_privacy_policy_content'] ) || ! is_array( $GLOBALS['wl_test_privacy_policy_content'] ) ) {
+			$GLOBALS['wl_test_privacy_policy_content'] = array();
+		}
+		$GLOBALS['wl_test_privacy_policy_content'][] = array(
+			'plugin_name' => (string) $plugin_name,
+			'policy_text' => (string) $policy_text,
+		);
 	}
 }
 

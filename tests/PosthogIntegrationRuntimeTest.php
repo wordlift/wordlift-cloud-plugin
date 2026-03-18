@@ -7,7 +7,7 @@ final class PosthogIntegrationRuntimeTest extends WordPressTestCase {
 
 		$integration->register_hooks();
 
-		self::assertCount( 3, $GLOBALS['wl_test_actions'] );
+		self::assertCount( 4, $GLOBALS['wl_test_actions'] );
 		self::assertCount( 1, $GLOBALS['wl_test_filters'] );
 		self::assertSame( 'admin_init', $GLOBALS['wl_test_actions'][0]['hook'] );
 		self::assertStringContainsString( 'plugin_action_links_', $GLOBALS['wl_test_filters'][0]['hook'] );
@@ -17,9 +17,9 @@ final class PosthogIntegrationRuntimeTest extends WordPressTestCase {
 		$integration = new Wordlift_Cloud_Posthog_Integration();
 		$integration->register_settings();
 
-		self::assertCount( 3, $GLOBALS['wl_test_registered_settings'] );
+		self::assertCount( 6, $GLOBALS['wl_test_registered_settings'] );
 		self::assertCount( 1, $GLOBALS['wl_test_settings_sections'] );
-		self::assertCount( 1, $GLOBALS['wl_test_settings_fields'] );
+		self::assertCount( 4, $GLOBALS['wl_test_settings_fields'] );
 	}
 
 	public function test_register_settings_page_and_render_settings_page_output(): void {
@@ -43,7 +43,7 @@ final class PosthogIntegrationRuntimeTest extends WordPressTestCase {
 		ob_start();
 		$integration->render_settings_section();
 		$section_output = (string) ob_get_clean();
-		self::assertStringContainsString( 'authenticated WordPress admin usage', $section_output );
+		self::assertStringContainsString( 'FAQ rendering options and optional admin telemetry', $section_output );
 
 		ob_start();
 		$integration->render_enabled_field();
@@ -76,9 +76,9 @@ final class PosthogIntegrationRuntimeTest extends WordPressTestCase {
 
 		$integration->enqueue_admin_assets( 'options-general.php' );
 
-		self::assertCount( 1, $GLOBALS['wl_test_inline_scripts'] );
-		self::assertSame( 'common', $GLOBALS['wl_test_inline_scripts'][0]['handle'] );
-		self::assertStringContainsString( 'posthog.init', $GLOBALS['wl_test_inline_scripts'][0]['data'] );
+		self::assertGreaterThanOrEqual( 1, count( $GLOBALS['wl_test_inline_scripts'] ) );
+		self::assertSame( 'common', $GLOBALS['wl_test_inline_scripts'][ count( $GLOBALS['wl_test_inline_scripts'] ) - 1 ]['handle'] );
+		self::assertStringContainsString( 'posthog.init', $GLOBALS['wl_test_inline_scripts'][ count( $GLOBALS['wl_test_inline_scripts'] ) - 1 ]['data'] );
 	}
 
 	public function test_capture_server_event_returns_false_when_not_authorized(): void {

@@ -76,4 +76,28 @@ final class PosthogIntegrationTest extends WordPressTestCase {
 		self::assertStringContainsString( '<a href="https://example.test/wp-admin/options-general.php?page=wordlift-cloud-settings">', $link );
 		self::assertStringContainsString( '>Settings</a>', $link );
 	}
+
+	public function test_register_settings_registers_frontend_toggle_option(): void {
+		$service = new Wordlift_Cloud_Posthog_Integration();
+		$service->register_settings();
+
+		$names = array_map(
+			static function ( $entry ) {
+				return (string) $entry['name'];
+			},
+			$GLOBALS['wl_test_registered_settings']
+		);
+
+		self::assertContains( Wordlift_Cloud_Frontend_Bootstrap_Script::OPTION_ENABLED, $names );
+		self::assertContains( Wordlift_Cloud_Frontend_Bootstrap_Script::OPTION_FAQ_TARGET_ID, $names );
+		self::assertContains( Wordlift_Cloud_Frontend_Bootstrap_Script::OPTION_FAQ_TEMPLATE, $names );
+	}
+
+	public function test_add_privacy_policy_content_registers_text(): void {
+		$service = new Wordlift_Cloud_Posthog_Integration();
+		$service->add_privacy_policy_content();
+
+		self::assertNotEmpty( $GLOBALS['wl_test_privacy_policy_content'] );
+		self::assertSame( 'WordLift Cloud', $GLOBALS['wl_test_privacy_policy_content'][0]['plugin_name'] );
+	}
 }
