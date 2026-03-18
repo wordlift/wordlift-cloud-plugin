@@ -8,6 +8,6 @@ abstract class WordPressTestCase extends TestCase {
 		parent::setUp();
 		wordlift_test_reset_wp_state();
 		$_GET = array();
+		$_POST = array();
 	}
 }
-

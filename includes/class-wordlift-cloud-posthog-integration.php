@@ -57,6 +57,7 @@ class Wordlift_Cloud_Posthog_Integration implements Wordlift_Cloud_Analytics_Pro
 	 */
 	public function register_hooks() {
 		add_action( 'admin_init', array( $this, 'register_settings' ) );
+		add_action( 'admin_init', array( $this, 'add_privacy_policy_content' ) );
 		add_action( 'admin_menu', array( $this, 'register_settings_page' ) );
 		add_action( 'admin_enqueue_scripts', array( $this, 'enqueue_admin_assets' ) );
 		add_filter( 'plugin_action_links_' . plugin_basename( dirname( __DIR__ ) . '/wordlift-cloud.php' ), array( $this, 'add_plugin_action_links' ) );
@@ -73,6 +74,33 @@ class Wordlift_Cloud_Posthog_Integration implements Wordlift_Cloud_Analytics_Pro
 				'type'              => 'boolean',
 				'sanitize_callback' => array( __CLASS__, 'sanitize_enabled' ),
 				'default'           => 0,
+			)
+		);
+		register_setting(
+			self::SETTINGS_GROUP,
+			Wordlift_Cloud_Frontend_Bootstrap_Script::OPTION_ENABLED,
+			array(
+				'type'              => 'boolean',
+				'sanitize_callback' => array( __CLASS__, 'sanitize_enabled' ),
+				'default'           => 1,
+			)
+		);
+		register_setting(
+			self::SETTINGS_GROUP,
+			Wordlift_Cloud_Frontend_Bootstrap_Script::OPTION_FAQ_TARGET_ID,
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => array( 'Wordlift_Cloud_Frontend_Bootstrap_Script', 'sanitize_faq_target_id' ),
+				'default'           => 'faq-container',
+			)
+		);
+		register_setting(
+			self::SETTINGS_GROUP,
+			Wordlift_Cloud_Frontend_Bootstrap_Script::OPTION_FAQ_TEMPLATE,
+			array(
+				'type'              => 'string',
+				'sanitize_callback' => array( 'Wordlift_Cloud_Frontend_Bootstrap_Script', 'sanitize_faq_template' ),
+				'default'           => Wordlift_Cloud_Frontend_Bootstrap_Script::default_faq_template(),
 			)
 		);
 
@@ -104,6 +132,28 @@ class Wordlift_Cloud_Posthog_Integration implements Wordlift_Cloud_Analytics_Pro
 		);
 
 		add_settings_field(
+			Wordlift_Cloud_Frontend_Bootstrap_Script::OPTION_ENABLED,
+			__( 'Enable FAQ rendering', 'wordlift-cloud' ),
+			array( $this, 'render_frontend_enabled_field' ),
+			self::SETTINGS_PAGE,
+			'wordlift_cloud_posthog_section'
+		);
+		add_settings_field(
+			Wordlift_Cloud_Frontend_Bootstrap_Script::OPTION_FAQ_TARGET_ID,
+			__( 'FAQ target element ID', 'wordlift-cloud' ),
+			array( $this, 'render_faq_target_id_field' ),
+			self::SETTINGS_PAGE,
+			'wordlift_cloud_posthog_section'
+		);
+		add_settings_field(
+			Wordlift_Cloud_Frontend_Bootstrap_Script::OPTION_FAQ_TEMPLATE,
+			__( 'FAQ HTML template', 'wordlift-cloud' ),
+			array( $this, 'render_faq_template_field' ),
+			self::SETTINGS_PAGE,
+			'wordlift_cloud_posthog_section'
+		);
+
+		add_settings_field(
 			self::OPTION_ENABLED,
 			__( 'Enable telemetry', 'wordlift-cloud' ),
 			array( $this, 'render_enabled_field' ),
@@ -132,7 +182,7 @@ class Wordlift_Cloud_Posthog_Integration implements Wordlift_Cloud_Analytics_Pro
 	 * @return string
 	 */
 	public static function build_settings_action_link( $url ) {
-		return '<a href="' . esc_attr( (string) $url ) . '">' . esc_html__( 'Settings', 'wordlift-cloud' ) . '</a>';
+		return '<a href="' . esc_url( (string) $url ) . '">' . esc_html__( 'Settings', 'wordlift-cloud' ) . '</a>';
 	}
 
 	/**
@@ -152,6 +202,10 @@ class Wordlift_Cloud_Posthog_Integration implements Wordlift_Cloud_Analytics_Pro
 	 * Render settings page content.
 	 */
 	public function render_settings_page() {
+		if ( ! current_user_can( 'manage_options' ) ) {
+			wp_die( esc_html__( 'You are not allowed to manage WordLift Cloud settings.', 'wordlift-cloud' ) );
+		}
+
 		?>
 		<div class="wrap">
 			<h1><?php echo esc_html__( 'WordLift Cloud Settings', 'wordlift-cloud' ); ?></h1>
@@ -170,7 +224,62 @@ class Wordlift_Cloud_Posthog_Integration implements Wordlift_Cloud_Analytics_Pro
 	 * Section intro text.
 	 */
 	public function render_settings_section() {
-		echo '<p>' . esc_html__( 'Configure optional telemetry for authenticated WordPress admin usage.', 'wordlift-cloud' ) . '</p>';
+		echo '<p>' . esc_html__( 'Configure FAQ rendering options and optional admin telemetry.', 'wordlift-cloud' ) . '</p>';
+	}
+
+	/**
+	 * Render frontend bootstrap enable checkbox.
+	 */
+	public function render_frontend_enabled_field() {
+		$enabled = (int) get_option( Wordlift_Cloud_Frontend_Bootstrap_Script::OPTION_ENABLED, 0 );
+		?>
+		<label for="<?php echo esc_attr( Wordlift_Cloud_Frontend_Bootstrap_Script::OPTION_ENABLED ); ?>">
+			<input
+				type="checkbox"
+				id="<?php echo esc_attr( Wordlift_Cloud_Frontend_Bootstrap_Script::OPTION_ENABLED ); ?>"
+				name="<?php echo esc_attr( Wordlift_Cloud_Frontend_Bootstrap_Script::OPTION_ENABLED ); ?>"
+				value="1"
+				<?php checked( 1, $enabled ); ?>
+			/>
+			<?php echo esc_html__( 'Enable FAQ rendering attributes and template output.', 'wordlift-cloud' ); ?>
+		</label>
+		<p class="description"><?php echo esc_html__( 'Disabled by default. WordLift bootstrap.js still loads; this toggle controls FAQ rendering attributes and in-page template output.', 'wordlift-cloud' ); ?></p>
+		<?php
+	}
+
+	/**
+	 * Render FAQ target element field.
+	 */
+	public function render_faq_target_id_field() {
+		$value = (string) get_option( Wordlift_Cloud_Frontend_Bootstrap_Script::OPTION_FAQ_TARGET_ID, 'faq-container' );
+		?>
+		<input
+			type="text"
+			class="regular-text"
+			id="<?php echo esc_attr( Wordlift_Cloud_Frontend_Bootstrap_Script::OPTION_FAQ_TARGET_ID ); ?>"
+			name="<?php echo esc_attr( Wordlift_Cloud_Frontend_Bootstrap_Script::OPTION_FAQ_TARGET_ID ); ?>"
+			value="<?php echo esc_attr( $value ); ?>"
+			placeholder="faq-container"
+		/>
+		<p class="description"><?php echo esc_html__( 'DOM element ID where FAQ markup is rendered (without #). The plugin does not create this container automatically.', 'wordlift-cloud' ); ?></p>
+		<?php
+	}
+
+	/**
+	 * Render FAQ template field.
+	 */
+	public function render_faq_template_field() {
+		$value = (string) get_option( Wordlift_Cloud_Frontend_Bootstrap_Script::OPTION_FAQ_TEMPLATE, Wordlift_Cloud_Frontend_Bootstrap_Script::default_faq_template() );
+		?>
+		<textarea
+			id="<?php echo esc_attr( Wordlift_Cloud_Frontend_Bootstrap_Script::OPTION_FAQ_TEMPLATE ); ?>"
+			name="<?php echo esc_attr( Wordlift_Cloud_Frontend_Bootstrap_Script::OPTION_FAQ_TEMPLATE ); ?>"
+			class="large-text code"
+			rows="12"
+			spellcheck="false"
+		><?php echo esc_html( $value ); ?></textarea>
+		<p class="description"><?php echo esc_html__( 'HTML/Mustache template used by bootstrap.js. Required placeholders: {{#faqs}}, {{question}}, {{{answer}}}, {{/faqs}}.', 'wordlift-cloud' ); ?></p>
+		<?php
 	}
 
 	/**
@@ -199,6 +308,8 @@ class Wordlift_Cloud_Posthog_Integration implements Wordlift_Cloud_Analytics_Pro
 	 * @param string $hook_suffix Current admin page hook.
 	 */
 	public function enqueue_admin_assets( $hook_suffix ) {
+		$this->maybe_enqueue_settings_editor( $hook_suffix );
+
 		if ( ! is_admin() || ! is_user_logged_in() ) {
 			return;
 		}
@@ -220,6 +331,71 @@ class Wordlift_Cloud_Posthog_Integration implements Wordlift_Cloud_Analytics_Pro
 		$api_host = self::get_api_host();
 		$context  = $this->build_admin_context( $hook_suffix );
 		wp_add_inline_script( 'common', self::build_admin_loader_script( $token, $api_host, self::DEFAULTS_SNAPSHOT, $context ) );
+	}
+
+	/**
+	 * Add code editor and client-side validation for FAQ template settings.
+	 *
+	 * @param string $hook_suffix Current admin hook.
+	 */
+	private function maybe_enqueue_settings_editor( $hook_suffix ) {
+		$page = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( (string) $_GET['page'] ) ) : '';
+		if ( 'options-general.php' !== (string) $hook_suffix || self::SETTINGS_PAGE !== $page ) {
+			return;
+		}
+
+		if ( function_exists( 'wp_enqueue_code_editor' ) ) {
+			$settings = wp_enqueue_code_editor(
+				array(
+					'type' => 'text/html',
+				)
+			);
+			if ( function_exists( 'wp_localize_script' ) ) {
+				wp_localize_script( 'code-editor', 'wordliftCloudFaqEditorSettings', array( 'codeEditor' => $settings ) );
+			}
+			if ( function_exists( 'wp_enqueue_script' ) ) {
+				wp_enqueue_script( 'code-editor' );
+			}
+			if ( function_exists( 'wp_enqueue_style' ) ) {
+				wp_enqueue_style( 'code-editor' );
+			}
+		}
+
+		$script = <<<'JS'
+(function(){
+	var field = document.getElementById('wordlift_cloud_faq_template');
+	if (!field) {
+		return;
+	}
+
+	try {
+		if (window.wp && wp.codeEditor && typeof wp.codeEditor.initialize === 'function') {
+			wp.codeEditor.initialize(field, { codemirror: { mode: 'htmlmixed', lineNumbers: true } });
+		}
+	} catch (e) {}
+
+	var form = field.closest('form');
+	if (!form) {
+		return;
+	}
+
+	form.addEventListener('submit', function(event){
+		var value = String(field.value || '');
+		var hasLoopStart = value.indexOf('{{#faqs}}') !== -1;
+		var hasLoopEnd = value.indexOf('{{/faqs}}') !== -1;
+		var hasQuestion = value.indexOf('{{question}}') !== -1;
+		var hasAnswer = value.indexOf('{{{answer}}}') !== -1;
+		if (hasLoopStart && hasLoopEnd && hasQuestion && hasAnswer) {
+			return;
+		}
+		event.preventDefault();
+		window.alert('WordLift Cloud FAQ template is invalid. Include {{#faqs}}, {{question}}, {{{answer}}}, and {{/faqs}}.');
+	});
+})();
+JS;
+		if ( function_exists( 'wp_add_inline_script' ) ) {
+			wp_add_inline_script( 'code-editor', $script );
+		}
 	}
 
 	/**
@@ -413,8 +589,9 @@ class Wordlift_Cloud_Posthog_Integration implements Wordlift_Cloud_Analytics_Pro
 	 * @return array<string,mixed>
 	 */
 	private function build_admin_context( $hook_suffix ) {
-		$taxonomy = isset( $_GET['taxonomy'] ) ? sanitize_key( (string) $_GET['taxonomy'] ) : '';
-		$page     = isset( $_GET['page'] ) ? sanitize_key( (string) $_GET['page'] ) : '';
+		$taxonomy         = isset( $_GET['taxonomy'] ) ? sanitize_key( wp_unslash( (string) $_GET['taxonomy'] ) ) : '';
+		$page             = isset( $_GET['page'] ) ? sanitize_key( wp_unslash( (string) $_GET['page'] ) ) : '';
+		$settings_updated = isset( $_GET['settings-updated'] ) ? sanitize_key( wp_unslash( (string) $_GET['settings-updated'] ) ) : '';
 
 		return array(
 			'user_id'               => (int) get_current_user_id(),
@@ -423,11 +600,29 @@ class Wordlift_Cloud_Posthog_Integration implements Wordlift_Cloud_Analytics_Pro
 			'page'                  => $page,
 			'is_entity_types_screen'=> ( 'edit-tags.php' === (string) $hook_suffix && 'wl_entity_type' === $taxonomy ),
 			'is_settings_screen'    => ( 'options-general.php' === (string) $hook_suffix && self::SETTINGS_PAGE === $page ),
-			'settings_updated'      => isset( $_GET['settings-updated'] ) && 'true' === (string) $_GET['settings-updated'],
+			'settings_updated'      => ( 'true' === $settings_updated ),
 				'posthog_enabled'       => self::is_enabled(),
 				'api_host_configured'   => '' !== self::get_api_host(),
 			);
 		}
+
+	/**
+	 * Add suggested privacy policy content for this plugin's external services.
+	 */
+	public function add_privacy_policy_content() {
+		if ( ! function_exists( 'wp_add_privacy_policy_content' ) ) {
+			return;
+		}
+
+		wp_add_privacy_policy_content(
+			__( 'WordLift Cloud', 'wordlift-cloud' ),
+			wp_kses_post(
+				'<p>' .
+				esc_html__( 'When enabled, WordLift Cloud loads external scripts to provide cloud features on frontend pages. Optional admin telemetry sends authenticated admin feature-usage events to the configured telemetry endpoint.', 'wordlift-cloud' ) .
+				'</p>'
+			)
+		);
+	}
 
 	/**
 	 * JSON encode with WordPress helper fallback.
