@@ -23,13 +23,15 @@
 - [x] Bump plugin minor version to `1.2.0` and prepare release tag.
 - [x] Harden `wl_entity_type` against WPML translation side effects by shipping `wpml-config.xml` and pruning non-canonical translated term slugs during sync.
 - [x] Move taxonomy sync execution off global `init`; run sync only on activation and admin-side plugin version changes.
+- [x] Add explicit frontend bootstrap opt-in setting (default off) and align external-service disclosures accordingly for WordPress.org compliance.
+- [x] Harden settings UX/compliance with capability guard, unslashed request sanitization, and privacy policy helper content.
 
 ## Next
 
 - [ ] Add WordPress integration tests (WP core test suite) for taxonomy registration and term sync in a real WP runtime.
 - [ ] Add WordPress integration tests (WP core test suite) for service-container bootstrapping/hooks and taxonomy registration in a real WP runtime.
 - [ ] Add admin capability fine-tuning for editing/deleting `wl_entity_type` terms if required by product policy.
-- [ ] Add explicit external service disclosure in `readme.txt` for WordPress.org compliance (service dependency, data flow, privacy policy URL, terms URL).
-- [ ] Add an explicit opt-in/consent flow before loading `https://cloud.wordlift.io/app/bootstrap.js` on the frontend.
+- [x] Add explicit external service disclosure in `readme.txt` for WordPress.org compliance (service dependency, data flow, privacy policy URL, terms URL).
+- [x] Add an explicit opt-in/consent flow before loading `https://cloud.wordlift.io/app/bootstrap.js` on the frontend.
 - [ ] Add plugin settings/admin notice documenting external requests and behavior when the remote service is unavailable.
-- [ ] Run a pre-release compliance checklist against https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/ and record results.
+- [x] Run a pre-release compliance checklist against https://developer.wordpress.org/plugins/wordpress-org/detailed-plugin-guidelines/ and record results.
