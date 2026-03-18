@@ -26,3 +26,8 @@ error_log
 # Docusaurus docs live in a sibling repository (symlinked here)
 /docs
 /docs/
+
+# Local-only directories
+/dist/
+/wordlift-plugin/
+/WordLift/

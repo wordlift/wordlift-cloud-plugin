@@ -43,6 +43,7 @@ bootstrap_wordpress() {
 
   echo "Activating plugin..."
   wpcli "wp plugin activate '$PLUGIN_SLUG' --allow-root"
+  wpcli "wp option update wordlift_cloud_frontend_enabled 1 --allow-root"
 
   echo "Configuring Classic Editor..."
   if ! wpcli "wp plugin is-installed classic-editor --allow-root" >/dev/null 2>&1; then

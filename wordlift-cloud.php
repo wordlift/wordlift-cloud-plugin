@@ -4,9 +4,12 @@
  * Plugin URI: https://wordlift.io
  * Description: Adds WordLift Cloud integration, manages Entity Types taxonomy, and supports optional admin-only telemetry.
  * Version: 1.2.1
+ * Requires at least: 6.0
+ * Requires PHP: 7.4
  * Author: WordLift
  * Author URI: https://wordlift.io
  * License: GPL2
+ * Text Domain: wordlift-cloud
  */
 
 if ( ! defined( 'ABSPATH' ) ) {
