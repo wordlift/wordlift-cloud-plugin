@@ -119,7 +119,7 @@ class Wordlift_Cloud_Frontend_Bootstrap_Script implements Wordlift_Cloud_Hookabl
 		foreach ( (array) $post_types as $post_type ) {
 			add_meta_box(
 				'wordlift-cloud-faq-rendering',
-				__( 'WordLift FAQ Rendering', 'wordlift-cloud' ),
+				__( 'FAQ', 'wordlift-cloud' ),
 				array( $this, 'render_faq_metabox' ),
 				(string) $post_type,
 				'side',
@@ -141,7 +141,7 @@ class Wordlift_Cloud_Frontend_Bootstrap_Script implements Wordlift_Cloud_Hookabl
 		?>
 		<div class="wordlift-cloud-faq-metabox">
 			<p>
-				<strong><?php echo esc_html__( 'FAQ Rendering', 'wordlift-cloud' ); ?></strong>
+				<strong><?php echo esc_html__( 'FAQ', 'wordlift-cloud' ); ?></strong>
 			</p>
 			<p>
 				<label for="wordlift_cloud_faq_override"><?php echo esc_html__( 'Post override', 'wordlift-cloud' ); ?></label><br />
@@ -400,7 +400,7 @@ jQuery(function($){
 		var branded = false;
 		$('.interface-interface-skeleton__sidebar button, .editor-sidebar button').each(function(){
 			var $button = $(this);
-			if ($.trim($button.text()) !== 'WordLift FAQ Rendering') {
+			if ($.trim($button.text()) !== 'FAQ') {
 				return;
 			}
 			if ($button.find('.wl-faq-icon-block').length) {

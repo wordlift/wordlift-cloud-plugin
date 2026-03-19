@@ -3,7 +3,7 @@ Contributors: wordlift
 Tags: wordlift, cloud, seo
 Requires at least: 5.0
 Tested up to: 6.9
-Stable tag: 1.2.2
+Stable tag: 1.2.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -57,6 +57,9 @@ This plugin connects to external services:
 2. Activate the plugin through the 'Plugins' menu in WordPress.
 
 == Changelog ==
+
+= 1.2.3 =
+* Renamed the FAQ override metabox label to `FAQ` in Classic and Block editor contexts.
 
 = 1.2.2 =
 * Added plugin-level FAQ rendering configuration (enable toggle, target element ID, editable HTML/Mustache template).
